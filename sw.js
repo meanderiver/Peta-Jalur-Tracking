@@ -1,4 +1,4 @@
-var cacheName = 'evakuasi-v2'; // Naikkan versi cache agar HP mengunduh data baru
+var cacheName = 'evakuasi-v3'; // Naikkan versi cache agar HP mengunduh data baru
 var filesToCache = [
   './',
   './index.html',
