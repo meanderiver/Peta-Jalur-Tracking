@@ -1,6 +1,6 @@
 {
-  "name": "Peta Jalur Tracking",
-  "short_name": "Jalur Tracking",
+  "name": "Peta Jalur Tracking Kalitalang",
+  "short_name": "Tracking",
   "display": "standalone",
   "start_url": "./index.html",
   "background_color": "#ffffff",
