@@ -20,6 +20,10 @@
         margin: 0;
     }
 
+.leaflet-control-attribution {
+    display: none !important;
+}
+
     .leaflet-control-layers-expanded::before {
     content: "📋 LEGENDA";
     font-weight: bold;
@@ -40,6 +44,31 @@
     <body>
         <div id="map">
         </div>
+        <!-- Pop-up Informasi / Petunjuk Penggunaan -->
+<!-- Pop-up Informasi / Petunjuk Penggunaan -->
+<!-- Pop-up Informasi / Petunjuk Penggunaan -->
+<!-- Pop-up Informasi / Petunjuk Penggunaan -->
+<div id="infoModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; font-family: sans-serif;">
+  <div style="background: #ffffff; width: 85%; max-width: 360px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: left; position: relative;">
+    <h3 style="margin-top: 0; color: #2c3e50; font-size: 16px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
+      ℹ️ Panduan Penggunaan Peta
+    </h3>
+    
+    <ul style="padding-left: 20px; font-size: 13px; color: #333; line-height: 1.8; margin: 12px 0;">
+      <li>
+        <b>Pelacakan GPS:</b> Tekan ikon <span style="background:#f4f4f4; border:1px solid #ccc; padding:2px 6px; border-radius:4px; font-size:12px;"><i class="fas fa-map-marker-alt" style="color:#000;"></i></span> di pojok kiri atas untuk mengunci lokasi Anda secara <i>real-time</i> saat pertama kali dibuka dan tekan kembali saat offline.
+      </li>
+      <li>
+        <b>Akses Offline:</b> Peta tetap dapat digunakan di area tanpa sinyal setelah dimuat pertama kali.
+      </li>
+      <li>
+        <b>Legenda Layer:</b> Tekan ikon <span style="background:#f4f4f4; border:1px solid #ccc; padding:2px 5px; border-radius:4px; display:inline-flex; align-items:center; justify-content:center; vertical-align:middle;"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#444" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"></path><path d="M2 17l10 5 10-5"></path><path d="M2 12l10 5 10-5"></path></svg></span> di pojok kanan atas untuk memilih layer peta yang ingin ditampilkan.
+      </li>
+    </ul>
+
+    <button onclick="closeInfoModal()" style="width: 100%; background: #3498db; color: white; border: none; padding: 10px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 13px; margin-top: 5px;">Mengerti & Lanjutkan</button>
+  </div>
+</div>
         <script src="js/qgis2web_expressions.js"></script>
         <script src="js/leaflet.js"></script>
         <script src="js/L.Control.Layers.Tree.min.js"></script>
@@ -413,11 +442,6 @@
             resetLabels([layer_PosTracking_3]);
         });
         </script>
-        <!-- Kotak Privasi -->
-<div style="position: absolute; bottom: 20px; left: 50%; transform: translateX(-50%); z-index: 9999; background: rgba(255, 255, 255, 0.95); padding: 10px 14px; border-radius: 10px; font-family: sans-serif; font-size: 13px; color: #111; text-align: center; box-shadow: 0px 4px 10px rgba(0,0,0,0.25); width: 85%; max-width: 360px; pointer-events: none; border: 1px solid #ccc;">
-  🔒 <b>Privasi Terjamin:</b> Lokasi GPS diproses di perangkat. Sistem tidak melacak data Anda.
-</div>
-
 <!-- Registrasi Service Worker -->
 <script>
   if ('serviceWorker' in navigator) {
@@ -425,6 +449,22 @@
       .then(function() { console.log('ServiceWorker Aktif'); })
       .catch(function(err) { console.log('ServiceWorker Gagal:', err); });
   }
+  // Fungsi Buka & Tutup Modal
+function openInfoModal() {
+    document.getElementById('infoModal').style.display = 'flex';
+}
+function closeInfoModal() {
+    document.getElementById('infoModal').style.display = 'none';
+}
+
+// Menambahkan Ikon Informasi (ℹ️) di Bawah Kontrol Layer (Kanan Atas)
+var infoControl = L.control({position: 'topright'});
+infoControl.onAdd = function (map) {
+    var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
+    div.innerHTML = '<a href="#" title="Panduan Penggunaan" onclick="openInfoModal(); return false;" style="background-color: #fff; width: 30px; height: 30px; line-height: 30px; text-align: center; font-weight: bold; font-size: 15px; color: #333; text-decoration: none; display: block;">ℹ️</a>';
+    return div;
+};
+infoControl.addTo(map);
 </script>        
     </body>
 </html>
