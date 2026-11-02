@@ -13,6 +13,101 @@
         <link rel="stylesheet" href="css/fontawesome-all.min.css">
         <link rel="stylesheet" href="css/leaflet.photon.css">
         <style>
+/* 1. Legenda tertutup (ikon tunggal) */
+.leaflet-control-layers:not(.leaflet-control-layers-expanded) {
+    background: #ffffff !important;
+    border-radius: 12px !important;
+    border: 1px solid #cbd5e1 !important;
+    box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15) !important;
+    padding: 0 !important;
+    width: 36px !important;
+    height: 36px !important;
+}
+
+/* Header disembunyikan saat tertutup */
+.leaflet-control-layers:not(.leaflet-control-layers-expanded) .legend-header {
+    display: none !important;
+}
+
+/* 2. Legenda terbuka */
+.leaflet-control-layers-expanded {
+    background: #ffffff !important;
+    border-radius: 14px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12) !important;
+    padding: 12px 14px !important;
+    min-width: 160px !important;
+    box-sizing: border-box !important;
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif !important;
+}
+
+/* 3. Baris header: judul kiri, panah kanan */
+.legend-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    height: 24px;
+    margin: 0 0 8px 0;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.legend-title {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0f172a;
+    letter-spacing: 0.5px;
+    line-height: 24px;
+    white-space: nowrap;
+}
+
+.legend-close {
+    flex: 0 0 auto;
+    width: 24px;
+    height: 24px;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f1f5f9;
+    border: none;
+    outline: none;
+    border-radius: 6px;
+    color: #0f172a;
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.legend-close:hover {
+    background: #e2e8f0;
+}
+
+/* 4. Daftar checklist */
+.leaflet-control-layers-expanded form,
+.leaflet-control-layers-expanded .leaflet-control-layers-list,
+.leaflet-control-layers-expanded .layer-tree-main,
+.leaflet-control-layers-expanded .leaflet-layer-tree-container {
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+}
+
+.leaflet-control-layers-overlays label,
+.leaflet-control-layers-base label,
+.leaflet-layer-tree-header {
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #0f172a !important;
+    margin: 5px 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    white-space: nowrap !important;
+}
     html, body, #map {
         width: 100%;
         height: 100%;
@@ -23,31 +118,181 @@
 .leaflet-control-attribution {
     display: none !important;
 }
+html, body, #map {
+                width: 100%;
+                height: 100vh !important;
+                margin: 0;
+                padding: 0;
+                font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            }
 
-    .leaflet-control-layers-expanded::before {
-    content: "📋 LEGENDA";
-    font-weight: bold;
-    font-size: 13px;
-    display: block;
-    width: 100%;
-    text-align: center;
-    box-sizing: border-box;
-    margin-bottom: 6px;
-    padding-bottom: 4px;
-    border-bottom: 1px solid #ccc;
-    color: #222;
+            /* Header Card Melayang Pojok Kiri Atas */
+            .header-card {
+                position: absolute;
+                top: 16px;
+                left: 16px;
+                z-index: 1000;
+                background: rgba(255, 255, 255, 0.92);
+                backdrop-filter: blur(8px);
+                -webkit-backdrop-filter: blur(8px);
+                padding: 10px 16px;
+                border-radius: 12px;
+                box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+                border: 1px solid rgba(255, 255, 255, 0.8);
+                max-width: 280px;
+                pointer-events: auto;
+            }
+
+            .brand-title {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .brand-title h1 {
+                font-size: 14px;
+                font-weight: 700;
+                color: #0f172a;
+                margin: 0;
+                line-height: 1.2;
+            }
+
+            .subtitle {
+                font-size: 11px;
+                color: #64748b;
+                margin: 3px 0 0 0;
+            }
+
+            .status-indicator {
+                width: 8px;
+                height: 8px;
+                border-radius: 50%;
+                background-color: #10b981;
+                box-shadow: 0 0 6px rgba(16, 185, 129, 0.6);
+            }
+
+            /* Menurunkan Kontrol Zoom & Lokasi Bawaan ke Bawah Header Card */
+            .leaflet-top.leaflet-left {
+                top: 85px !important;
+                left: 10px !important;
+            }
+
+            /* Pop-up Table Styling Modern */
+            .leaflet-popup-content-wrapper {
+                border-radius: 10px;
+                overflow: hidden;
+                box-shadow: 0 10px 25px rgba(0,0,0,0.18);
+            }
+
+            .leaflet-popup-content table {
+                margin: 0;
+                width: 100%;
+                border-collapse: collapse;
+            }
+
+            .leaflet-popup-content th {
+                background: #0f172a;
+                color: #ffffff;
+                padding: 6px 10px;
+                font-size: 11px;
+            }
+
+            .leaflet-popup-content td {
+                padding: 6px 10px;
+                font-size: 12px;
+                border-bottom: 1px solid #f1f5f9;
+            }
+            /* ==================================================== */
+/* UNIFORM STYLING SELESAI UNTUK SEMUA TOMBOL CONTROL    */
+/* (Zoom +, Zoom -, GPS Pin, & Tombol Info 'i')          */
+/* ==================================================== */
+
+/* 1. Wadah Tombol Berkelompok (Leaflet Bar) */
+.leaflet-bar {
+    border: none !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 12px !important;
+    overflow: hidden !important;
+}
+
+/* 2. Desain Semua Tombol Individu (+, -, GPS, Info 'i') */
+.leaflet-bar a,
+.leaflet-bar button,
+.leaflet-control-locate a,
+.leaflet-control a {
+    background-color: rgba(255, 255, 255, 0.92) !important;
+    backdrop-filter: blur(8px) !important;
+    -webkit-backdrop-filter: blur(8px) !important;
+    color: #0f172a !important;
+    border: none !important;
+    border-bottom: 1px solid rgba(226, 232, 240, 0.8) !important;
+    width: 34px !important;
+    height: 34px !important;
+    line-height: 34px !important;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    transition: all 0.2s ease !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    text-decoration: none !important;
+}
+
+/* Hilangkan garis pemisah bawah pada tombol paling akhir */
+.leaflet-bar a:last-child {
+    border-bottom: none !important;
+}
+
+/* Efek Hover (Saat Kursor Diatas Tombol) */
+.leaflet-bar a:hover,
+.leaflet-control-locate a:hover,
+.leaflet-control a:hover {
+    background-color: #2563eb !important;
+    color: #ffffff !important;
+}
+
+/* 3. Tombol Khusus Info 'i' di Kanan Atas */
+.leaflet-top.leaflet-right .leaflet-control,
+.leaflet-top.leaflet-right .leaflet-control a {
+    border-radius: 10px !important;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* 4. Watermark / Copyright Attribution di Pojok Kanan Bawah */
+.leaflet-container .leaflet-control-attribution {
+    background: rgba(255, 255, 255, 0.85) !important;
+    backdrop-filter: blur(6px) !important;
+    border-radius: 8px !important;
+    padding: 3px 8px !important;
+    font-size: 10px !important;
+    color: #64748b !important;
+    border: 1px solid rgba(255, 255, 255, 0.6) !important;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08) !important;
+}
+/* Sembunyikan panah bawaan plugin saat legenda terbuka */
+.leaflet-control.leaflet-control-layers.leaflet-control-layers-expanded > a.leaflet-control-layers-toggle,
+.leaflet-control.leaflet-control-layers.leaflet-control-layers-expanded > a.leaflet-control-layers-toggle::after {
+    display: none !important;
+    content: none !important;
 }
 </style>
+
         <title></title>
         <link rel="manifest" href="./manifest.json">
     </head>
     <body>
+        
+        <body>
+    <!-- 1. Header Judul (Harus DI LUAR div #map) -->
+    <div class="header-card">
+        <div class="brand-title">
+            <span class="status-indicator"></span>
+            <h1>WebGIS Trekking Kalitalang</h1>
+        </div>
+        <p class="subtitle">Sistem Pemantauan Jalur & Pos</p>
+    </div>
         <div id="map">
         </div>
-        <!-- Pop-up Informasi / Petunjuk Penggunaan -->
-<!-- Pop-up Informasi / Petunjuk Penggunaan -->
-<!-- Pop-up Informasi / Petunjuk Penggunaan -->
-<!-- Pop-up Informasi / Petunjuk Penggunaan -->
 <div id="infoModal" style="display: flex; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 10000; align-items: center; justify-content: center; font-family: sans-serif;">
   <div style="background: #ffffff; width: 85%; max-width: 360px; padding: 20px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); text-align: left; position: relative;">
     <h3 style="margin-top: 0; color: #2c3e50; font-size: 16px; border-bottom: 2px solid #3498db; padding-bottom: 8px;">
@@ -362,6 +607,21 @@
             collapsed: false, 
         });
         lay.addTo(map);
+        // Header legenda: judul + tombol panah dalam satu baris
+(function () {
+    var container = lay.getContainer();
+    var header = L.DomUtil.create('div', 'legend-header');
+    header.innerHTML =
+        '<span class="legend-title">📋 LEGENDA</span>' +
+        '<button type="button" class="legend-close" aria-label="Tutup legenda">&raquo;</button>';
+    container.insertBefore(header, container.firstChild);
+    L.DomEvent.disableClickPropagation(header);
+
+    // Tombol panah memicu toggle bawaan supaya status buka/tutup tetap sinkron
+    header.querySelector('.legend-close').addEventListener('click', function () {
+        container.querySelector('.leaflet-control-layers-toggle').click();
+    });
+})();
 		document.addEventListener("DOMContentLoaded", function() {
             // set new Layers List height which considers toggle icon
             function newLayersListHeight() {
@@ -465,6 +725,38 @@ infoControl.onAdd = function (map) {
     return div;
 };
 infoControl.addTo(map);
-</script>        
+</script>   
+<script>
+  // Menghubungkan Tombol "Lokasi Saya" dengan Peta
+  document.getElementById('btn-locate').addEventListener('click', function() {
+    if (typeof map !== 'undefined') {
+      map.locate({ setView: true, maxZoom: 16, enableHighAccuracy: true });
+    }
+  });
+
+  if (typeof map !== 'undefined') {
+    let userMarker, accuracyCircle;
+
+    map.on('locationfound', function(e) {
+      const radius = e.accuracy / 2;
+      if (userMarker) {
+        userMarker.setLatLng(e.latlng);
+        accuracyCircle.setLatLng(e.latlng).setRadius(radius);
+      } else {
+        userMarker = L.marker(e.latlng).addTo(map).bindPopup("Lokasi Terkini Anda");
+        accuracyCircle = L.circle(e.latlng, radius, {
+          color: '#2563eb',
+          fillColor: '#2563eb',
+          fillOpacity: 0.15,
+          weight: 1
+        }).addTo(map);
+      }
+    });
+
+    map.on('locationerror', function(e) {
+      alert("Gagal mengakses GPS: " + e.message);
+    });
+  }
+</script>     
     </body>
 </html>
