@@ -1,15 +1,19 @@
 {
   "name": "Peta Jalur Tracking Kalitalang",
-  "short_name": "Tracking",
+  "short_name": "Tracking Kalitalang",
+  "description": "Aplikasi WebGIS Pemantauan Jalur & Pos Trekking Ekowisata Kalitalang (Ramah HP & Offline)",
   "display": "standalone",
+  "orientation": "portrait-primary",
   "start_url": "./index.html",
-  "background_color": "#ffffff",
-  "theme_color": "#000000",
+  "scope": "./",
+  "background_color": "#0f172a",
+  "theme_color": "#0f172a",
   "icons": [
     {
       "src": "./legend/icon.png",
       "sizes": "192x192",
-      "type": "image/png"
+      "type": "image/png",
+      "purpose": "any maskable"
     }
   ]
 }
