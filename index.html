@@ -180,6 +180,7 @@
         .leaflet-top.leaflet-right {
             top: max(12px, env(safe-area-inset-top, 12px)) !important;
             right: 12px !important;
+            z-index: 1005 !important;
         }
 
         /* Legenda tertutup (ikon tunggal) */
@@ -331,10 +332,21 @@
             border-radius: 12px !important;
         }
 
-        /* Label Pos pada Peta */
+        /* Label Pos pada Peta - Pill Kontras Tinggi & Mudah Dibaca */
         .css_PosTracking_3 {
-            text-shadow: 0 1px 4px rgba(0, 0, 0, 0.95), 0 0 8px rgba(0, 0, 0, 0.85);
             pointer-events: none;
+        }
+        .css_PosTracking_3 > div {
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            padding: 2px 8px;
+            border-radius: 999px;
+            border: 1px solid rgba(250, 204, 21, 0.75);
+            box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+            font-size: 11px !important;
+            line-height: 1.35;
+            letter-spacing: 0.2px;
         }
 
         /* =========================================================
@@ -1744,6 +1756,30 @@
             if (window.innerWidth < 768 && controlLayersElement) {
                 controlLayersElement.classList.remove('leaflet-control-layers-expanded');
             }
+
+            // Tutup legenda otomatis saat peta diketuk di layar HP
+            map.on('click', function () {
+                if (window.innerWidth < 768 && controlLayersElement) {
+                    controlLayersElement.classList.remove('leaflet-control-layers-expanded');
+                }
+            });
+
+            // Penyesuaian otomatis posisi tombol Zoom & GPS tepat di bawah Header Card pada semua ukuran layar
+            function syncLeftControlsOffset() {
+                var headerEl = document.querySelector('.header-card');
+                var topLeftEl = document.querySelector('.leaflet-top.leaflet-left');
+                if (headerEl && topLeftEl) {
+                    var rect = headerEl.getBoundingClientRect();
+                    topLeftEl.style.setProperty('top', Math.round(rect.bottom + 10) + 'px', 'important');
+                }
+            }
+            syncLeftControlsOffset();
+            window.addEventListener('resize', syncLeftControlsOffset);
+            if (typeof ResizeObserver !== 'undefined') {
+                var ro = new ResizeObserver(syncLeftControlsOffset);
+                var hc = document.querySelector('.header-card');
+                if (hc) ro.observe(hc);
+            }
         });
         setBounds();
         var i = 0;
@@ -1778,9 +1814,59 @@
     <!-- Registrasi Service Worker & Kontrol Info -->
     <script>
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.register('./sw.js')
-                .then(function () { console.log('ServiceWorker Aktif'); })
+            // Jika pengguna me-refresh halaman saat online, bersihkan cache versi lama secara otomatis
+            var navEntries = (window.performance && performance.getEntriesByType) ? performance.getEntriesByType('navigation') : [];
+            var isReload = (navEntries.length > 0 && navEntries[0].type === 'reload') ||
+                           (window.performance && performance.navigation && performance.navigation.type === 1);
+
+            if (isReload && navigator.onLine && 'caches' in window) {
+                caches.keys().then(function (keys) {
+                    keys.forEach(function (k) {
+                        if (k !== 'peta-kalitalang-v6') {
+                            caches.delete(k);
+                        }
+                    });
+                });
+            }
+
+            navigator.serviceWorker.register('./sw.js', { updateViaCache: 'none' })
+                .then(function (reg) {
+                    console.log('ServiceWorker Aktif');
+                    if (navigator.onLine) {
+                        reg.update();
+                    }
+                    if (reg.waiting) {
+                        reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+                    }
+                    reg.addEventListener('updatefound', function () {
+                        var newWorker = reg.installing;
+                        if (newWorker) {
+                            newWorker.addEventListener('statechange', function () {
+                                if (newWorker.state === 'installed' && navigator.serviceWorker.controller) {
+                                    newWorker.postMessage({ type: 'SKIP_WAITING' });
+                                }
+                            });
+                        }
+                    });
+                    if (isReload && navigator.onLine && navigator.serviceWorker.controller) {
+                        navigator.serviceWorker.controller.postMessage({ type: 'FORCE_REFRESH_CACHE' });
+                    }
+                })
                 .catch(function (err) { console.log('ServiceWorker Gagal:', err); });
+
+            var refreshingSw = false;
+            function triggerSingleReload() {
+                if (!refreshingSw) {
+                    refreshingSw = true;
+                    window.location.reload();
+                }
+            }
+            navigator.serviceWorker.addEventListener('controllerchange', triggerSingleReload);
+            navigator.serviceWorker.addEventListener('message', function (event) {
+                if (event.data && event.data.type === 'CACHE_UPDATED_RELOAD') {
+                    triggerSingleReload();
+                }
+            });
         }
         function openInfoModal() {
             document.getElementById('infoModal').style.display = 'flex';
@@ -1788,6 +1874,13 @@
         function closeInfoModal() {
             document.getElementById('infoModal').style.display = 'none';
         }
+        // Tutup modal saat area gelap (backdrop) diklik
+        document.getElementById('infoModal').addEventListener('click', function (e) {
+            if (e.target === this) closeInfoModal();
+        });
+        document.getElementById('sosModal').addEventListener('click', function (e) {
+            if (e.target === this) closeSosModal();
+        });
         var infoControl = L.control({ position: 'topright' });
         infoControl.onAdd = function (map) {
             var div = L.DomUtil.create('div', 'leaflet-bar leaflet-control');
@@ -2312,8 +2405,12 @@
                 './legend/logo-klaten.png'
             ];
             if ('caches' in window) {
-                caches.open('peta-kalitalang-v4').then(function (cache) {
-                    return Promise.allSettled(urlsToCache.map(function (u) { return cache.add(u); }));
+                caches.open('peta-kalitalang-v6').then(function (cache) {
+                    return Promise.allSettled(urlsToCache.map(function (u) {
+                        return fetch(new Request(u, { cache: 'no-store' })).then(function (res) {
+                            if (res && res.status === 200) return cache.put(u, res);
+                        });
+                    }));
                 }).then(function () {
                     label.textContent = '✓ Tersimpan';
                     setTimeout(function () { label.textContent = 'Offline'; }, 3000);

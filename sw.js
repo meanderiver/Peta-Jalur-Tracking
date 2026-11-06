@@ -1,4 +1,5 @@
-var CACHE_NAME = 'peta-kalitalang-v4';
+var CACHE_NAME = 'peta-kalitalang-v6';
+
 var CORE_ASSETS = [
     './',
     './index.html',
@@ -40,46 +41,96 @@ var CORE_ASSETS = [
     './css/images/marker-icon-2x.png',
     './css/images/marker-shadow.png'
 ];
-// 1. Install & Pre-cache Seluruh File Lokal Utama (termasuk logo, jalur, pos, dan basemap)
+
+// Ambil ulang seluruh file utama langsung dari server/disk (bypass HTTP disk cache) lalu simpan ke CacheStorage untuk mode offline
+function refreshCoreCache() {
+    return caches.open(CACHE_NAME).then(function(cache) {
+        return Promise.allSettled(
+            CORE_ASSETS.map(function(url) {
+                var req = new Request(url, { cache: 'no-store' });
+                return fetch(req).then(function(res) {
+                    if (res && res.status === 200) {
+                        return cache.put(url, res);
+                    }
+                }).catch(function(err) {
+                    console.warn('Gagal pre-cache asset:', url, err);
+                });
+            })
+        );
+    });
+}
+
+// 1. Install: Langsung aktifkan Service Worker baru & muat aset terbaru
 self.addEventListener('install', function(event) {
     self.skipWaiting();
-    event.waitUntil(
-        caches.open(CACHE_NAME).then(function(cache) {
-            return Promise.allSettled(
-                CORE_ASSETS.map(function(url) {
-                    return cache.add(url).catch(function(err) {
-                        console.warn('Gagal pre-cache asset:', url, err);
-                    });
-                })
-            );
-        })
-    );
+    event.waitUntil(refreshCoreCache());
 });
+
+// 2. Activate: Bersihkan semua cache versi lama & segarkan tab yang sedang terbuka
 self.addEventListener('activate', function(event) {
     event.waitUntil(
         caches.keys().then(function(keyList) {
+            var hadOldCache = false;
             return Promise.all(
                 keyList.map(function(key) {
-                    if (key !== CACHE_NAME && key.indexOf('peta-kalitalang-') === 0) {
+                    if (key !== CACHE_NAME) {
+                        hadOldCache = true;
                         return caches.delete(key);
                     }
                 })
-            );
-        }).then(function() {
-            return clients.claim();
+            ).then(function() {
+                return self.clients.claim().then(function() {
+                    if (hadOldCache) {
+                        return self.clients.matchAll({ type: 'window' }).then(function(windowClients) {
+                            windowClients.forEach(function(client) {
+                                client.postMessage({ type: 'CACHE_UPDATED_RELOAD' });
+                                if (typeof client.navigate === 'function') {
+                                    client.navigate(client.url).catch(function() {});
+                                }
+                            });
+                        });
+                    }
+                });
+            });
         })
     );
 });
-// 2. Fetch Event: Ambil dari Cache dulu, jika belum ada ambil dari Network & Simpan (Termasuk Tile Google)
+
+// 3. Message Listener: Tangani perintah refresh cache langsung saat pengguna me-refresh halaman
+self.addEventListener('message', function(event) {
+    if (!event.data) return;
+    if (event.data.type === 'SKIP_WAITING') {
+        self.skipWaiting();
+    } else if (event.data.type === 'FORCE_REFRESH_CACHE') {
+        event.waitUntil(
+            caches.keys().then(function(keys) {
+                return Promise.all(
+                    keys.map(function(k) {
+                        return caches.delete(k);
+                    })
+                );
+            }).then(function() {
+                return refreshCoreCache();
+            })
+        );
+    }
+});
+
+// 4. Fetch Event:
+// - Saat ONLINE: Selalu ambil file terbaru dari server/disk menggunakan { cache: 'no-store' }
+//   agar setiap perubahan kode/data langsung tampil saat di-refresh tanpa perlu hapus cache manual,
+//   kemudian salinannya disimpan ke CacheStorage untuk penggunaan offline.
+// - Saat OFFLINE: Otomatis mengambil dari CacheStorage.
 self.addEventListener('fetch', function(event) {
     if (event.request.method !== 'GET') return;
-    event.respondWith(
-        caches.match(event.request).then(function(response) {
-            if (response) {
-                return response;
-            }
-            return fetch(event.request).then(function(networkResponse) {
-                if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+
+    var requestUrl = new URL(event.request.url);
+    var isSameOrigin = requestUrl.origin === self.location.origin;
+
+    if (isSameOrigin) {
+        event.respondWith(
+            fetch(event.request, { cache: 'no-store' }).then(function(networkResponse) {
+                if (networkResponse && networkResponse.status === 200) {
                     var responseToCache = networkResponse.clone();
                     caches.open(CACHE_NAME).then(function(cache) {
                         cache.put(event.request, responseToCache);
@@ -87,10 +138,31 @@ self.addEventListener('fetch', function(event) {
                 }
                 return networkResponse;
             }).catch(function() {
-                if (event.request.mode === 'navigate') {
-                    return caches.match('./index.html');
-                }
-            });
+                return caches.match(event.request, { ignoreSearch: true }).then(function(cachedResponse) {
+                    if (cachedResponse) {
+                        return cachedResponse;
+                    }
+                    if (event.request.mode === 'navigate') {
+                        return caches.match('./index.html', { ignoreSearch: true });
+                    }
+                });
+            })
+        );
+        return;
+    }
+
+    // Tile eksternal (Google Satellite)
+    event.respondWith(
+        fetch(event.request).then(function(networkResponse) {
+            if (networkResponse && (networkResponse.status === 200 || networkResponse.type === 'opaque')) {
+                var responseToCache = networkResponse.clone();
+                caches.open(CACHE_NAME).then(function(cache) {
+                    cache.put(event.request, responseToCache);
+                });
+            }
+            return networkResponse;
+        }).catch(function() {
+            return caches.match(event.request);
         })
     );
 });
